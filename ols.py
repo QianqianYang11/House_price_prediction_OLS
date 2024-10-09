@@ -13,7 +13,7 @@ from scipy import stats
 import statsmodels.api as sm
 
 #import data
-train = pd.read_csv('D:/2023semester/spyder/project1/HWA/housing/train.csv')
+train = pd.read_csv('D:\\2023semester\\House_prediction\\train.csv')
 
 #drop irrelevant data
 train = train.drop('Id', axis = 1)
@@ -78,7 +78,7 @@ sns.distplot(y)
 z_scores = np.abs(stats.zscore(train))
 threshold = 3
 train = train[(z_scores < threshold).all(axis=1)]
-train.to_excel('D:/2023semester/spyder/project1/HWA/train(late).xlsx', index=False)#Z-score
+train.to_excel('D:\\2023semester\\House_prediction\\train(late).xlsx', index=False)#Z-score
 #outlier Y
 threshold = 3
 y = y[(z_scores < threshold).all(axis=1)]#Z-score
@@ -96,61 +96,30 @@ model = sm.OLS(y_matched, X_matched).fit()
 print(model.summary())
 
 
+numeric_columns = train.select_dtypes(include=['number'])#select only number
+scaler = StandardScaler()
+imputer = SimpleImputer(strategy='mean')
+numeric_columns_scaled = scaler.fit_transform(imputer.fit_transform(numeric_columns))
+train_scaled = pd.DataFrame(data=numeric_columns_scaled, columns=numeric_columns.columns)#deal data
+
+n_components = 0.95
+pca = PCA(n_components=n_components)
+train_pca = pca.fit_transform(train_scaled)#PCA
+
+explained_variance = pca.explained_variance_ratio_
+print(explained_variance)#see explained variance
+
+cumulative_variance = np.cumsum(explained_variance)
+target_variance = 0.95
+num_components_to_keep = np.argmax(cumulative_variance >= target_variance) + 1
+train_pca = train_pca[:, :num_components_to_keep]#change data
+
+train_pca_df = pd.DataFrame(data=train_pca, columns=numeric_columns.columns[:num_components_to_keep])
+updated_column_names = train.columns
+one_hot_encoding_cols = updated_column_names
+train = pd.concat([train_pca_df, train[one_hot_encoding_cols]], axis=1)
 
 
+train.to_excel('D:\\2023semester\\House_prediction\\result.xlsx')
+print(train)
 
-# # Train your final model using the selected features and optimal alpha
-# final_model = YourModelHere()  # Replace with your preferred model
-# final_model.fit(selected_features, y)
-
-
-
-
-
-
-
-
-
-
-# #delete highly related（PCA）(too many variables in the end)
-# train.drop("SalePrice", axis=1, inplace=True)#drop dependent variable
-# numeric_columns = train.select_dtypes(include=['number'])#select only number
-# scaler = StandardScaler()
-# imputer = SimpleImputer(strategy='mean')
-# numeric_columns_scaled = scaler.fit_transform(imputer.fit_transform(numeric_columns))
-# train_scaled = pd.DataFrame(data=numeric_columns_scaled, columns=numeric_columns.columns)#deal data
-
-# n_components = 0.95
-# pca = PCA(n_components=n_components)
-# train_pca = pca.fit_transform(train_scaled)#PCA
-
-# explained_variance = pca.explained_variance_ratio_
-# print(explained_variance)#see explained variance
-
-# cumulative_variance = np.cumsum(explained_variance)
-# target_variance = 0.95
-# num_components_to_keep = np.argmax(cumulative_variance >= target_variance) + 1
-# train_pca = train_pca[:, :num_components_to_keep]#change data
-
-# train_pca_df = pd.DataFrame(data=train_pca, columns=numeric_columns.columns[:num_components_to_keep])
-# updated_column_names = train.columns
-# one_hot_encoding_cols = updated_column_names
-# train = pd.concat([train_pca_df, train[one_hot_encoding_cols]], axis=1)
-
-
-# train.to_excel('D:/2023semester/spyder/project1/HWA/111.xlsx')
-# print(train)
-
-
-
-
-
-
-
-
-
-# ##
-# #y=train['SalePrice']
-# #x=train['']
-# #print(y.shape)
-# #print(x)
